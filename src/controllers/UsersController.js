@@ -1,6 +1,13 @@
+const AppError = require("../utils/AppError");
+
 class UsersController {
   create(req, res) {
     const { name, idade, password, isAdmin } = req.body;
+
+    if (!name) {
+      throw new AppError("Nome é obrigatório!");
+    }
+
     res.status(201).json({ name, idade, password, isAdmin });
   }
   // Cada controller pode ter no máximo 5 metodos, caso tenha mais você deve criar outro controller
