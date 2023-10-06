@@ -1,21 +1,32 @@
+const { hash } = require("bcryptjs");
 const AppError = require("../utils/AppError");
+const sqliteConnection = require("../database/sqlite");
+
+const { response } = require("express");
 
 class UsersController {
-  create(req, res) {
-    const { name, idade, password, isAdmin } = req.body;
+  async create(req, res) {
+    const { name, email, password } = req.body;
 
-    if (!name) {
-      throw new AppError("Nome é obrigatório!");
+    const database = await sqliteConnection();
+    const checkUserExists = await database.get(
+      "SELECT * FROM users WHERE email = (?)",
+      [email]
+    );
+
+    if (checkUserExists) {
+      throw new AppError("Este email já está em uso.");
     }
 
-    res.status(201).json({ name, idade, password, isAdmin });
+    const hashedPassord = await hash(password, 8);
+
+    await database.run(
+      "INSERT INTO users (name, email,password) VALUES (?,?,?)",
+      [name, email, hashedPassord]
+    );
+
+    return response.status(201).json();
   }
-  // Cada controller pode ter no máximo 5 metodos, caso tenha mais você deve criar outro controller
-  //   index - GET para listar vários registros
-  //   show - GET para exibir um registro especifico
-  //   create - POST para criar um registro
-  //   update - PUT para atualziar um registro
-  //   delete - DELETE para remover um registro
 }
 
 module.exports = UsersController;
